@@ -76,8 +76,8 @@ func (s *queryStore) SaveVehicle(ctx context.Context, v vehicle.Vehicle, expecte
 		_, err := s.e.ExecContext(ctx, "INSERT INTO vehicles("+vehicleColumns+") VALUES(?,?,?,?,?,?,?,?,?,?,?)", v.ID, v.PlateNumber, v.VehicleType, v.DepotCode, v.Status, v.CapacityKg, v.OdometerKm, formatTime(v.InspectionDueAt), v.Version, formatTime(v.CreatedAt), formatTime(v.UpdatedAt))
 		return databaseError(err)
 	}
-	update := "UPDATE vehicles SET plate_number=?, vehicle_type=?, depot_code=?, status=?, capacity_kg=?, odometer_km=?, inspection_due_at=?, version=?, updated_at=? WHERE id=?"
-	result, err := s.e.ExecContext(ctx, update, v.PlateNumber, v.VehicleType, v.DepotCode, v.Status, v.CapacityKg, v.OdometerKm, formatTime(v.InspectionDueAt), v.Version, formatTime(v.UpdatedAt), v.ID)
+	update := "UPDATE vehicles SET plate_number=?, vehicle_type=?, depot_code=?, status=?, capacity_kg=?, odometer_km=?, inspection_due_at=?, version=?, updated_at=? WHERE id=? AND version=?"
+	result, err := s.e.ExecContext(ctx, update, v.PlateNumber, v.VehicleType, v.DepotCode, v.Status, v.CapacityKg, v.OdometerKm, formatTime(v.InspectionDueAt), v.Version, formatTime(v.UpdatedAt), v.ID, expectedVersion)
 	if err != nil {
 		return databaseError(err)
 	}
@@ -85,7 +85,7 @@ func (s *queryStore) SaveVehicle(ctx context.Context, v vehicle.Vehicle, expecte
 	if err != nil {
 		return err
 	}
-	if count == 0 {
+	if count != 1 {
 		return repositoryConflict()
 	}
 	return nil
